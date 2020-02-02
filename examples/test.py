@@ -14,9 +14,8 @@ bcdp.build_extractor(project, template, name_field='model', index=[1, 6])
 
 # Load the data. Because we have loaded the template, the loader now knows
 # exactly how to extract the required informations from the filenames.
-loader = bcdp.LocalFileSource()
 paths = os.path.join(os.path.expanduser('~'), 'data/CORDEX_Africa/*clt*')
-ens = loader(paths=paths, project=project)
+ens = bcdp.load_local(paths=paths, project=project)
 
 # The loader returns an Ensemble object, which is essentially a collection
 # of datasets and applies preprocessing operations to each of them. Here we

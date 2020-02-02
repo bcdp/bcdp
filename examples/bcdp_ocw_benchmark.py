@@ -37,8 +37,7 @@ with time_block(bcdp_results, 'Dataset Loading'):
     project = 'CORDEX-Africa'
     template = '*_{model}_*_{variable}.nc'
     bcdp.build_extractor(project, template, name_field='model', index=[1, 6])
-    loader = bcdp.LocalFileSource()
-    ens = loader(paths=paths, project=project)
+    ens = bcdp.load_local(paths=paths, project=project)
     
 # Ouput grid info
 domain = ens.overlap
