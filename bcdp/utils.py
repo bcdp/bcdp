@@ -163,7 +163,12 @@ def subset_1d(da, dim, domain):
     xarray.DataArray
         Subsetted data.
     """
-    selection = (da[dim] >= domain.min) & (da[dim] <= domain.max)
+    coord = da[dim]
+    dmin, dmax = domain.min, domain.max
+    if dim == 'time':
+        coord = coord.astype(str)
+        dmin, dmax = str(dmin), str(dmax)
+    selection = (coord >= dmin) & (coord <= dmax)
     return da.isel(**{dim: selection})
 
 
