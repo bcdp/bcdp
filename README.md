@@ -6,8 +6,11 @@ This library is intended to be a drop in replacement for Apache [OCW](climate.ap
 **NOTE**: This package is still essentially in alpha is missing some features. The current API is subject to major changes.
 
 # Installation
-`bcdp` requires Python 3.6+. Currently available via PyPI:
-
+`bcdp` requires Python 3.6+. Currently available via conda:
+```
+conda install -c conda-forge bcdp
+```
+or `pip`:
 ```
 pip install bcdp
 ```
@@ -28,6 +31,6 @@ paths = os.path.join(os.path.expanduser('~'), 'data/CORDEX_Africa/*clt*')
 
 Then:
 ```
-cd bcdp/examples
+cd bcdp/examples/scripts
 python test.py
 ```
