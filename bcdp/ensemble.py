@@ -536,16 +536,29 @@ class Ensemble(object):
         return self[0]
 
     @property
+    def size(self):
+        size = 0
+        for da in self:
+            size += da.nbytes
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if 1 <= size < 1e3:
+                break
+            size /= 1e3
+        size = np.round(size, 2)
+        return f'{size}{unit}'
+
+    @property
     def overlap(self):
         """Spatial and temporal overlap of all the datasets"""
         ref = self.first
-        time_min, time_max = ref.time.values.min(), ref.time.values.max()
+        time_min, time_max = (str(ref.time.astype(str).min().values),
+                              str(ref.time.astype(str).max().values))
         lon_min, lon_max = ref.lon.values.min(), ref.lon.values.max()
         lat_min, lat_max = ref.lat.values.min(), ref.lat.values.max()
         if not isinstance(self.data, xr.Dataset):
             for da in self.data.values:
-                time_min, time_max = (max(da.time.values.min(), time_min),
-                                      min(da.time.values.max(), time_max))
+                time_min, time_max = (max(str(da.time.astype(str).min().values), time_min),
+                                      min(str(da.time.astype(str).max().values), time_max))
                 lon_min, lon_max = (max(da.lon.values.min(), lon_min),
                                     min(da.lon.values.max(), lon_max))
                 lat_min, lat_max = (max(da.lat.values.min(), lat_min),
