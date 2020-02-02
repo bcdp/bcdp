@@ -30,3 +30,7 @@ ESGF_NODES = {'LLNL': 'esgf-node.llnl.gov',
               'NCI': 'esgf.nci.org.au',
               'GFDL': 'esgdata.gfdl.noaa.gov',
               'GSFC': 'esgf.nccs.nasa.gov'}
+
+# Intake catalogs
+DEFAULT_INTAKE_CAT = 'https://raw.githubusercontent.com/pangeo-data/pangeo-datastore/master/intake-catalogs/master.yaml'
+DEFAULT_INTAKE_ESM_CAT = 'https://raw.githubusercontent.com/NCAR/intake-esm-datastore/master/catalogs/pangeo-cmip6.json'

@@ -6,7 +6,8 @@ import pandas as pd
 import xarray as xr
 from .adapters import Adapter
 from .bounds import Bounds
-from .constants import RCMED_QUERY_URL, ESGF_NODES
+from .constants import (RCMED_QUERY_URL, ESGF_NODES,
+                        DEFAULT_INTAKE_CAT, DEFAULT_INTAKE_ESM_CAT)
 from .ensemble import Ensemble
 from .registry import registry, register
 from .utils import inherit_docs, decode_month_units, get_dropped_varnames
@@ -40,6 +41,7 @@ class DataSource(object):
             Default adapter to use for post-processing.
         """
         self.adapter = adapter if adapter else 'basic'
+        self._cache = {}
 
     def __call__(self, *args, **kwargs):
         """Main interface for loading datasets.
@@ -76,6 +78,26 @@ class DataSource(object):
     def load(self, *args, **kwargs):
         """Loads datasets from given parameters."""
         pass
+        
+    def _prep_datasets(self, variable, dset_dict):
+        datasets = []
+        for name, ds in dset_dict.items():
+            variables = dict(ds.data_vars)
+            if len(variables) == 1:
+                # If no project or variable name information, infer it
+                # from file_metadata. This will only work if the file has
+                # one non-coordinate variable.
+                variable = list(variables.keys())[0]
+            elif not variable:
+                raise ValueError('Variable name must be specified for files'
+                                 ' with more than one non-coord variable.')
+
+            # Check if variable name is defined in metadata.
+            da = ds[variable].squeeze(drop=True)
+            da.attrs['variable_name'] = da.name
+            da.name = name
+            datasets.append(da)
+        return datasets
 
 
 @register('source.local')
@@ -142,17 +164,25 @@ class LocalFileSource(DataSource):
         def open_dataset(path, **kwargs):
             dropped = get_dropped_varnames(variable) if variable else None
             if os.path.isfile(path):
-                ds = xr.open_dataset(path, drop_variables=dropped, **kwargs)
+                    ds = self._cache.get(
+                        path,
+                        xr.open_dataset(path, drop_variables=dropped, **kwargs)
+                    )
+                        
             else:
                 chunks = kwargs.pop('chunks', None)
-                ds = xr.open_mfdataset(path, drop_variables=dropped, **kwargs)
+                ds = self._cache.get(
+                    path,
+                    xr.open_mfdataset(path, drop_variables=dropped, **kwargs)
+                )
                 ds = ds.chunk(chunks)
                 if load_all and chunks is None:
                     ds = ds.load()
+            self._cache[path] = ds
             return ds
 
         # Open each dataset
-        datasets = []
+        dset_dict = {}
         for name, path in zip(names, paths):
             try:
                 ds = open_dataset(path, **kwargs)
@@ -160,10 +190,6 @@ class LocalFileSource(DataSource):
                 # Custom datetime decoding required for monthly time units
                 kwargs.update(decode_times=False)
                 ds = decode_month_units(open_dataset(path, **kwargs))
-            variables = dict(ds.variables)
-            coords = dict(ds.coords)
-            for coord in coords.keys():
-                variables.pop(coord, None)
             if project:
                 # Get variable name from filename if project given.
                 meta = extractor.query(filename=path)[0]
@@ -175,21 +201,80 @@ class LocalFileSource(DataSource):
                     if convert_times:
                         dim_vals = [pd.Timestamp(t) for t in dim_vals]
                     ds = ds.assign_coords({concat_dim: dim_vals})
-                elif len(variables) == 1:
-                    # If no project or variable name information, infer it
-                    # from file_metadata. This will only work if the file has
-                    # one non-coordinate variable.
-                    variable = variables.keys()[0]
-                elif not variable:
-                    raise ValueError('Variable name must be specified for files'
-                                     ' with more than one non-coord variable.')
+            dset_dict[name] = ds
+        return self._prep_datasets(variable, dset_dict)
 
-            # Check if variable name is defined in metadata.
-            da = ds[variable].squeeze(drop=True)
-            da.attrs['variable_name'] = da.name
-            da.name = name
-            datasets.append(da)
-        return datasets
+
+@register('source.intake')
+class IntakeSource(DataSource):
+    """"Load remote data via the intake library."""
+    def load(self, variable=None, names=None, depth=5,
+             catfile=DEFAULT_INTAKE_CAT, auth_token=None):
+        """Loads datasets from given parameters.
+
+        Parameters
+        ----------
+        variable : str, optional
+            Variable Name. If input files have only one non-coordinate variable,
+            that variable's name is used by default.
+        names : list of str, optional
+            List of dataset names.
+        depth : int, optional
+            Depth of catalog search (default: 5)
+        catfile : str, optional
+            Path to catalogue metadata file, can be a remote URL. The pangeo
+            Intake master catalogue is used by default.
+        auth_token : str, optional
+            Path to credentials key file to use for accessing cloud storage
+            buckets.
+
+        Returns
+        -------
+        datasets : list
+            xarray DataArray objects.
+        """
+        import intake
+        if auth_token:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = auth_token
+        cat = intake.Catalog(catfile)
+        meta = cat.walk(depth=depth)
+        sel = [name for name, ent in meta.items() if ent.container == 'xarray']
+        names = sel if not names else names
+        entries = [cat[name] for name in sel]
+        shortnames = [name.split('.')[-1] for name in sel]
+        dset_dict = {name: ent.to_dask() for name, ent in zip(shortnames, entries)
+                     if name in names}
+        return self._prep_datasets(variable, dset_dict)
+
+
+@register('source.intake-esm')
+class IntakeESMSource(DataSource):
+    """"Load remote data via the intake-esm library."""
+    def load(self, query, catfile=DEFAULT_INTAKE_ESM_CAT, **kwargs):
+        """Loads datasets from given parameters.
+        
+        Parameters
+        ----------
+        query: dict
+            Key, value pairs used to search the catalogue.
+            Depth of catalog search (default: 5)
+        catfile : str, optional
+            Path to catalogue metadata file, can be a remote URL. The pangeo
+            intake-esm CMIP6 catalogue is used by default.
+        **kwargs : dict, optional
+            Keyword Arguments for `intake_esm.core.esm_datastore.to_dataset_dict()`
+
+        Returns
+        -------
+        datasets : list
+            xarray DataArray objects.
+        """
+        import intake
+        col = intake.open_esm_datastore(catfile)
+        cat = col.search(**query)
+        dset_dict = cat.to_dataset_dict(**kwargs)
+        return self._prep_datasets(None, dset_dict)
+        
 
 @register('source.rcmed')
 class RCMEDSource(DataSource):
@@ -262,6 +347,7 @@ class RCMEDSource(DataSource):
         meta = pd.DataFrame(data=info['data'], columns=info['fields_name'])
         return meta
 
+
 @register('source.esgf')
 class ESGFSource(DataSource):
     """Earth System Grid (ESGF) data source"""
@@ -294,3 +380,10 @@ class ESGFSource(DataSource):
             coordinate variables, keyed by dataset names.
         """
         hostname = ESGF_NODES[node]
+        raise NotImplementedError('')
+
+
+load_local = LocalFileSource()
+load_intake = IntakeSource()
+load_intake_esm = IntakeESMSource()
+load_rcmed = RCMEDSource()
