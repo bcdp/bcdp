@@ -130,8 +130,9 @@ def select_season(da, season=None):
 
         # Additionally remove years which do not contain all months
         # in the season
-        locut = pd.Timestamp('{}-{}'.format(ys, ms)).asm8
-        hicut = pd.Timestamp('{}-{}'.format(ye, me)).asm8
-        cond2 = (da.time >= locut) & (da.time <= hicut)
+        locut = f'{ys}-{ms}'
+        hicut = f'{ye}-{me}'
+        str_times = da.time.astype(str)
+        cond2 = (str_times >= locut) & (str_times <= hicut)
         da = da.isel(time=cond1&cond2)
     return da
