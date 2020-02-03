@@ -52,20 +52,6 @@ class Ensemble(object):
     def __len__(self):
         return len(self.data)
 
-    @staticmethod
-    def concat(*objs):
-        """Combine Ensemble objects into one.
-
-        *objs : list of Ensemble
-            Objects to combine.
-
-        Returns
-        -------
-        bcdp.Ensemble
-            Combined object.
-        """
-        return Ensemble(pd.concat([obj.data for obj in objs]))
-
     def assign(self, data, inplace=False):
         """Construct a new Ensemble or modify this instance in place.
 
@@ -565,3 +551,17 @@ class Ensemble(object):
                                     min(da.lat.values.max(), lat_max))
         return Bounds(lon_bnds=(lon_min, lon_max), lat_bnds=(lat_min, lat_max),
                       time_bnds=(time_min, time_max))
+
+
+def concat(*objs):
+    """Combine Ensemble objects into one.
+
+    *objs : list of Ensemble
+        Objects to combine.
+
+    Returns
+    -------
+    bcdp.Ensemble
+        Combined object.
+    """
+    return Ensemble(pd.concat([obj.data for obj in objs]))
