@@ -95,7 +95,7 @@ def select_season(da, season=None):
     da : xarray.DataArray
         Dataset
     season : str or tuple, optional
-        Season. Can be 'DJF', 'MAM', 'JJA', 'SON', or a tuple
+        Season. Can be a string (eg 'NDJFM'), or a tuple
         (start_month, end_month)
 
     Returns
@@ -107,26 +107,16 @@ def select_season(da, season=None):
         freq = utils.infer_freq(da)
         ys, ye = da.time.dt.year.values.min(), da.time.dt.year.values.max()
         if isinstance(season, str):
-            if season == 'DJF':
-                ms, me = 12, 2
-            elif season == 'MAM':
-                ms, me = 3, 5
-            elif season == 'JJA':
-                ms, me = 6, 8
-            elif season == 'SON':
-                ms, me = 9, 11
-            else:
-                raise ValueError('Invalid season: {}'.format(season))
-            cond1 = da.time.dt.season == season
+            ms, me = utils.season_to_range(season)
         else:
             # Subset data to include only selected season
             ms, me = season
-            mask1 = da.time.dt.month >= ms
-            mask2 = da.time.dt.month <= me
-            if ms > me:
-                cond1 = mask1|mask2
-            else:
-                cond1 = mask1&mask2
+        mask1 = da.time.dt.month >= ms
+        mask2 = da.time.dt.month <= me
+        if ms > me:
+            cond1 = mask1|mask2
+        else:
+            cond1 = mask1&mask2
 
         # Additionally remove years which do not contain all months
         # in the season

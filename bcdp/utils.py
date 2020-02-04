@@ -172,6 +172,32 @@ def subset_1d(da, dim, domain):
     return da.isel(**{dim: selection})
 
 
+def season_to_range(season):
+    """Convert season string to month range (eg, 'DJF' -> (12, 2))
+    
+    Parameters
+    ----------
+    season : str
+        Season string abbreviated by capital letters of each month (eg DJF)
+        
+    Returns
+    -------
+    ms, me
+        Start and end month numbers.
+    """
+    months = 'JFMAMJJASOND'
+    idx = list(range(len(months)))
+    perms = {}
+    for i in idx:
+        perm = months[i:] + months[:i]
+        if season in perm:
+            start = perm.index(season)
+            i_perm = idx[i:] + idx[:i]
+            ms, me = i_perm[start] + 1, i_perm[start + len(season) - 1] + 1
+            return ms, me
+    raise ValueError(f'Invalid season: {season}')
+
+
 def get_dropped_varnames(f, varnames=None, group=None):
     """Determines list of variables that should not be loaded from the file.
 
