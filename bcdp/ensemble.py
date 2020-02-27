@@ -112,13 +112,13 @@ class Ensemble(object):
         ----------
         **kwargs : dict
             Additional keyword arguments passed on to `dask.array.compute`.
-        
+
         Returns
         -------
         bcdp.Ensemble
             Modified Ensemble.
         """
-        return self.assign(lambda da: da.compute(**kwargs))
+        return self.apply(lambda da: da.compute(**kwargs))
 
     def persist(self, *kwargs):
         """Apply persist() on each dataset.
@@ -127,13 +127,13 @@ class Ensemble(object):
         ----------
         **kwargs : dict
             Additional keyword arguments passed on to `dask.perist`.
-        
+
         Returns
         -------
         bcdp.Ensemble
             Modified Ensemble.
         """
-        return self.assign(lambda da: da.persist(**kwargs))
+        return self.apply(lambda da: da.persist(**kwargs))
 
     def add_mean(self, name, label='ENS'):
         """Calculate simple arithmetic mean of ensemble.
