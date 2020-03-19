@@ -273,7 +273,7 @@ class IntakeESMSource(DataSource):
         col = intake.open_esm_datastore(catfile)
         cat = col.search(**query)
         dset_dict = cat.to_dataset_dict(**kwargs)
-        variable = kwargs.get('variable_id')
+        variable = query.get('variable_id')
         return self._prep_datasets(variable, dset_dict)
         
 
