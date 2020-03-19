@@ -1,7 +1,7 @@
 # Default values of coordinate names. Primarily used by instances of
 # bcdp.Adapter when remapping coordinate variables
-X_LABELS = ['x', 'lon', 'lons', 'longitude', 'longitudes', 'rlon']
-Y_LABELS = ['y', 'lat', 'lats', 'latitude', 'latitudes', 'rlat']
+X_LABELS = ['x', 'lon', 'lons', 'longitude', 'longitudes', 'rlon', 'nlon', 'i']
+Y_LABELS = ['y', 'lat', 'lats', 'latitude', 'latitudes', 'rlat', 'nlon', 'j']
 Z_LABELS = ['lev', 'plev', 'level']
 T_LABELS = ['time', 'times', 'date', 'dates', 'julian']
 

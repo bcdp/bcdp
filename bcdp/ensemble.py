@@ -496,8 +496,7 @@ class Ensemble(object):
             return func(data, *args, **kwargs)
         return self.apply(wrapped_func, *args, **kwargs)
 
-    def plot(self, label_func=None, func=None, label_args=None,
-             args=None, label_kwargs=None, **kwargs):
+    def plot(self, *labels, args=None, **kwargs):
         """Apply plotting functions to datasets contained in Ensemble.
 
         Parameters

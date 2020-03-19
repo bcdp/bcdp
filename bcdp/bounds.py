@@ -148,15 +148,17 @@ class Bounds(object):
                                  time_bnds=time_bnds)
 
     def _initialize_domains(self, lon_bnds=None, lat_bnds=None, time_bnds=None):
-        self._lon_bnds = Domain('lon', lon_bnds,
-                                periodic=True, valid_range=(-180, 180))
-
-        self._lat_bnds = Domain('lat', lat_bnds, valid_range=(-90, 90))
-        time_bnds = list(time_bnds)
-        for i, time in enumerate(time_bnds):
-            if isinstance(time, str):
-                time_bnds[i] = pd.Timestamp(time).to_datetime64()
-        self._time_bnds = Domain('time', tuple(time_bnds))
+        if lon_bnds is not None:
+            self._lon_bnds = Domain('lon', lon_bnds,
+                                    periodic=True, valid_range=(-180, 180))
+        if lat_bnds is not None:
+            self._lat_bnds = Domain('lat', lat_bnds, valid_range=(-90, 90))
+        if time_bnds is not None:
+            time_bnds = list(time_bnds)
+            for i, time in enumerate(time_bnds):
+                if isinstance(time, str):
+                    time_bnds[i] = pd.Timestamp(time).to_datetime64()
+            self._time_bnds = Domain('time', tuple(time_bnds))
 
     @property
     def lon_bnds(self):

@@ -273,7 +273,8 @@ class IntakeESMSource(DataSource):
         col = intake.open_esm_datastore(catfile)
         cat = col.search(**query)
         dset_dict = cat.to_dataset_dict(**kwargs)
-        return self._prep_datasets(None, dset_dict)
+        variable = kwargs.get('variable_id')
+        return self._prep_datasets(variable, dset_dict)
         
 
 @register('source.rcmed')
