@@ -40,11 +40,10 @@ class Regridder(object):
         pass
 
     def __call__(self, data):
-        if self.input_grid.lat.ndim == self.output_grid.lat.ndim:
-            if ((self.output_grid.lat.shape == self.input_grid.lat.shape) &
-                (self.output_grid.lon.shape == self.input_grid.lon.shape) &
-                (self.output_grid.lat == self.input_grid.lat).all() &
-                (self.output_grid.lon == self.input_grid.lon).all()):
+        if ((self.output_grid.lat.shape == self.input_grid.lat.shape) and
+            (self.output_grid.lon.shape == self.input_grid.lon.shape) and
+            (self.output_grid.lat.values == self.input_grid.lat.values).all() and
+            (self.output_grid.lon.values == self.input_grid.lon.values).all()):
                 return data
         if not self.cached:
             self.setup()

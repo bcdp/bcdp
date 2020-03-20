@@ -105,7 +105,7 @@ class Ensemble(object):
             da.name = name
         return self.assign(data, inplace=inplace)
 
-    def compute(self, *kwargs):
+    def compute(self, **kwargs):
         """Apply compute() on each dataset.
 
         Parameters
@@ -120,7 +120,7 @@ class Ensemble(object):
         """
         return self.apply(lambda da: da.compute(**kwargs))
 
-    def persist(self, *kwargs):
+    def persist(self, **kwargs):
         """Apply persist() on each dataset.
 
         Parameters
