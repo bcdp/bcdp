@@ -54,10 +54,10 @@ def normalize_times(da, assume_gregorian=False):
     da = da.copy()
     idx = da.indexes['time']
     times = idx.to_series()
+    da['time'] = times.apply(lambda d: d.replace(day=1).replace(hour=0))
     if assume_gregorian and not isinstance(idx, pd.DatetimeIndex):
         times = times.apply(lambda d: np.datetime64(str(d)))
         da = da.assign_coords(time=times)
-    da['time'] = times.apply(lambda d: d.replace(day=1).replace(hour=0))
     return da
 
 
