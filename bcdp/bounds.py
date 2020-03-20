@@ -157,7 +157,7 @@ class Bounds(object):
             time_bnds = list(time_bnds)
             for i, time in enumerate(time_bnds):
                 if isinstance(time, str):
-                    time_bnds[i] = pd.Timestamp(time).to_datetime64()
+                    time_bnds[i] = np.datetime64(time)
             self._time_bnds = Domain('time', tuple(time_bnds))
 
     @property

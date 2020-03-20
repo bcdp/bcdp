@@ -123,7 +123,7 @@ class Adapter(object):
             # This approach might not work for all curvilinear grids, so we should
             # look into other ways to do this...
             idx = np.where(np.diff(old.lon[0, :]) < 0)[0]
-            if not idx:
+            if idx is None:
                 return old
                 
             if np.isscalar(idx):

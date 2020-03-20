@@ -55,13 +55,9 @@ def normalize_times(da, assume_gregorian=False):
     idx = da.indexes['time']
     times = idx.to_series()
     if assume_gregorian and not isinstance(idx, pd.DatetimeIndex):
-        times = times.apply(lambda d: pd.Timestamp(str(d)))
+        times = times.apply(lambda d: np.datetime64(str(d)))
         da = da.assign_coords(time=times)
-    freq = utils.infer_freq(da)
-    if freq == 'M' or freq == 'MS':
-        da['time'] = times.apply(lambda d: d.replace(day=1))
-    elif freq == 'D':
-        da['time'] = times.apply(lambda d: d.replace(hour=0))
+    da['time'] = times.apply(lambda d: d.replace(day=1).replace(hour=0))
     return da
 
 
@@ -80,7 +76,12 @@ def resample(da, freq):
     xarray.DataArray
         Subsetted dataset.
     """
-    if freq != utils.infer_freq(da):
+    try:
+        ref_freq = utils.infer_freq(da)
+    except TypeError:
+        # non-standard calendar
+        ref_freq = None
+    if freq != ref_freq:
         attrs = da.attrs
         da = da.resample(time=freq).mean('time')
         da.attrs.update(attrs)
@@ -104,7 +105,6 @@ def select_season(da, season=None):
         Seasonalized dataset.
     """
     if season:
-        freq = utils.infer_freq(da)
         ys, ye = da.time.dt.year.values.min(), da.time.dt.year.values.max()
         if isinstance(season, str):
             ms, me = utils.season_to_range(season)

@@ -199,7 +199,7 @@ class LocalFileSource(DataSource):
                 if concat_dim not in ds.coords:
                     dim_vals = meta[concat_dim]
                     if convert_times:
-                        dim_vals = [pd.Timestamp(t) for t in dim_vals]
+                        dim_vals = [np.datetime64(t) for t in dim_vals]
                     ds = ds.assign_coords({concat_dim: dim_vals})
             dset_dict[name] = ds
         return self._prep_datasets(variable, dset_dict)
