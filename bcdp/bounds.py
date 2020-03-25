@@ -148,11 +148,9 @@ class Bounds(object):
                                  time_bnds=time_bnds)
 
     def _initialize_domains(self, lon_bnds=None, lat_bnds=None, time_bnds=None):
-        if lon_bnds is not None:
-            self._lon_bnds = Domain('lon', lon_bnds,
-                                    periodic=True, valid_range=(-180, 180))
-        if lat_bnds is not None:
-            self._lat_bnds = Domain('lat', lat_bnds, valid_range=(-90, 90))
+        self._lon_bnds = Domain('lon', lon_bnds,
+                                periodic=True, valid_range=(-180, 180))
+        self._lat_bnds = Domain('lat', lat_bnds, valid_range=(-90, 90))
         if time_bnds is not None:
             time_bnds = list(time_bnds)
             for i, time in enumerate(time_bnds):
@@ -248,7 +246,7 @@ class PolygonBounds(Bounds):
         time_bnds : tuple of floats, optional
             Start and end times.
         """
-        self._initialize_domains(lat_bnds=None, lon_bnds=None, time_bnds=time_bnds)
+        self._initialize_domains(time_bnds=time_bnds)
         fmt = boundary_file.split('.')[-1] if not fmt else fmt
         def geom_sel(name, names):
             if not names:
