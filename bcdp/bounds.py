@@ -248,7 +248,7 @@ class PolygonBounds(Bounds):
         time_bnds : tuple of floats, optional
             Start and end times.
         """
-        self._initialize_domains(time_bnds=time_bnds)
+        self._initialize_domains(lat_bnds=None, lon_bnds=None, time_bnds=time_bnds)
         fmt = boundary_file.split('.')[-1] if not fmt else fmt
         def geom_sel(name, names):
             if not names:
