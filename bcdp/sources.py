@@ -3,6 +3,7 @@ import os
 import inspect
 import requests
 import pandas as pd
+import numpy as np
 import xarray as xr
 from .adapters import Adapter
 from .bounds import Bounds
