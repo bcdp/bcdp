@@ -104,8 +104,8 @@ class DataSource(object):
 @register('source.local')
 class LocalFileSource(DataSource):
     """Local Filesystem data source"""
-    def load(self, paths='./*.nc', variable=None, names=None, convert_times=True,
-             dims=None, project=None, load_all=False, **kwargs):
+    def load(self, paths='./*.nc', variable=None, names=None, convert_times=False,
+             use_dt64=False, dims=None, project=None, load_all=False, **kwargs):
         """Loads datasets from given parameters.
 
         Parameters
@@ -119,9 +119,14 @@ class LocalFileSource(DataSource):
             List of dataset names. By default these are inferred directly from
             the input `paths` attribute.
         convert_times : bool, optional
-            If True (default), files are assumed to be split by time and values
-            are automatically converted to pandas.Timestamp objects.
+            If True, files are assumed to be split by time and values
+            are automatically converted to datetime-like objects.
             Does nothing if `project` is not set.
+        use_dt64 : bool, optional
+            If convert_times is True, use numpy.datetime64 to parse times
+            instead of pandas.Timestamp. Only use this if the latter causes
+            errors, as it is less flexible with datetimes that aren't in
+            ISO 8601 format.
         project : str, optional
             A project name that encapsulates all of the datasets to be loaded.
             This must be a valid key in bcdp.extractors.metadata_extractors,
@@ -200,7 +205,10 @@ class LocalFileSource(DataSource):
                 if concat_dim not in ds.coords:
                     dim_vals = meta[concat_dim]
                     if convert_times:
-                        dim_vals = [np.datetime64(t) for t in dim_vals]
+                        if use_dt64:
+                            dim_vals = [np.datetime64(t) for t in dim_vals]
+                        else:
+                            dim_vals = [pd.Timestamp(t) for t in dim_vals]
                     ds = ds.assign_coords({concat_dim: dim_vals})
             dset_dict[name] = ds
         return self._prep_datasets(variable, dset_dict)
