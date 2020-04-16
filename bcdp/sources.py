@@ -214,6 +214,59 @@ class LocalFileSource(DataSource):
         return self._prep_datasets(variable, dset_dict)
 
 
+@register('source.bucket')
+class BucketSource(DataSource):
+    """"Load zarr data from cloud storage buckets."""
+    def load(self, *paths, variable=None, bucket_type=None,
+             zarr_kwargs=None, **kwargs):
+        """Loads datasets from given parameters.
+
+        Parameters
+        ----------
+        *paths : str
+            Paths to zarr datastore in bucket.
+        variable : str, optional
+            Variable Name. If input files have only one non-coordinate variable,
+            that variable's name is used by default.
+        bucket_type : str, optional
+            Type of cloud bucket (gc or s3). Can be ignored if the bucket type
+            is in the url (eg gc://, s3://)
+        zarr_kwargs : dict, optional
+            Additional keyword arguments to pass to xarray.open_zarr.
+            consolidated=True is set to default.
+        **kwargs : dict, optional
+            Keyword arguments to pass to bucke API (gcsfs or s3fs)
+        Returns
+        -------
+        datasets : list
+            xarray DataArray objects.
+        """
+        dset_dict = {}
+        zarr_kwargs = zarr_kwargs if zarr_kwargs else dict(consolidated=True)
+        for path in paths:
+            if '://' in path:
+                bucket_type = path.split('://')[0]
+            if bucket_type not in ['s3', 'gc']:
+                raise ValueError('Please specify supported bucket type (s3, gc)')
+            if bucket_type == 's3':
+                import s3fs
+                fs = s3fs.S3FileSystem(**kwargs)
+                mapper = s3fs.S3Map
+            elif bucket_type == 'gc':
+                import gcsfs
+                fs = gcsfs.GCSFileSystem
+                mapper = gcsfs.GCSMap
+            if path.endswith('*'):
+                sub_paths = fs.ls(path[:-2])
+            else:
+                sub_paths = [path]
+            for spath in sub_paths:
+                name = spath.split('/')[-1]
+                store = mapper(spath, fs)
+                dset_dict[name] = xr.open_zarr(store, **zarr_kwargs)
+        return self._prep_datasets(variable, dset_dict)
+
+
 @register('source.intake')
 class IntakeSource(DataSource):
     """"Load remote data via the intake library."""
@@ -394,6 +447,7 @@ class ESGFSource(DataSource):
 
 
 load_local = LocalFileSource()
+load_bucket = BucketSource()
 load_intake = IntakeSource()
 load_intake_esm = IntakeESMSource()
 load_rcmed = RCMEDSource()
