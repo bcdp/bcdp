@@ -1,7 +1,7 @@
 # bcdp
 Big Climate Data Pipeline
 
-This library is intended to be a drop in replacement for Apache [OCW](climate.apache.org), a climate model evaluation processing pipeline.
+This library is intended to be a drop in replacement for Apache [OCW](https://climate.apache.org), a climate model evaluation processing pipeline.
 
 **NOTE**: This package is still essentially in alpha is missing some features. The current API is subject to major changes.
 
